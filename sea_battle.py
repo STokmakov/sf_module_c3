@@ -105,30 +105,31 @@ class PlayingField:
         self.busy = []                                    # лист занятых точек
         self.ships = []                                   # лист точек кораблей
 
-    def prinfield(self, other):   # заполнение поля занятых точек
+    def prinfield(self, other):   # метод заполнение поля занятых точек
         res = "-------------------------------------------------------------- \n"
         res += "          Поле Игрока                 Поле Компьютера          \n"
         res += "-------------------------------------------------------------- \n"
         res += "  || 1 | 2 | 3 | 4 | 5 | 6 ||   || 1 | 2 | 3 | 4 | 5 | 6 || "
-        for i in range(6):                                     # проход по спискам
+        for i in range(6):                                     # цикл для обхода поля
             res += "\n" + str(i + 1) + " ||"
-            for j in range(6):                                 # проход по списку поля игрока
+            for j in range(6):                                 # цикл для поля игрока
                 line = str()
-                line += " " + self.field[i][j] + " |"          # формирование строки поля игрока
+                line += " " + self.field[i][j] + " |"          # строка поля игрока
                 if self.hid:
-                    line = line.replace("■", "O")              # проверка отображения кораблей на поле
+                    line = line.replace("■", "O")              # проверяем отображение кораблей на поле
                 res += line
-            res += "|   ||"                                    # добавление разделителя
-            for j in range(6):                                 # проход по списку поля компьютера
+            res += "|   ||"                                    # добавляем разделитель
+
+            for j in range(6):                                 # цикл для поля компьютера
                 line = str()
-                line += " " + other.field[i][j] + " |"         # формирование строки поля компьютера
+                line += " " + other.field[i][j] + " |"         # строка поля компьютера
                 if other.hid:
-                    line = line.replace("■", "O")              # проверка отображения кораблей на поле
+                    line = line.replace("■", "O")              # проверяем отображение кораблей на поле
                 res += line
-            res += "| " + str(i + 1)                           # добавление нумерации поля
+            res += "| " + str(i + 1)                           # добавляем нумерацию
 
         return res
-    def out(self, d):                                          # проверка ошибки поля (за пределы поля)
+    def out(self, d):                                          # метод проверки выхода за пределы поля
         return not ((0 <= d.x < self.size) and (0 <= d.y < self.size))
     def contour(self, ship, verb=False):                       # метод контур кораблика
         near = [
@@ -147,7 +148,7 @@ class PlayingField:
         for d in ship.points:
             if self.out(d) or d in self.busy:             # проверка ошибки расположения кораблика
                 raise PlayingFieldWrongShipException()
-        for d in ship.points:                               # добавление кораблика на поле
+        for d in ship.points:                             # добавление кораблика на поле
             self.field[d.x][d.y] = "■"                    # заполнение поля
             self.busy.append(d)                           # добавление координат в поле занятых клето
 
@@ -206,36 +207,6 @@ class Player:
             except PlayingFieldException as e:
                 print(e)
 
-class Comp(Player):
-    """
-класс Comp(Player) - класс хода комптютера.
-    описывается следующим методом:
-    - ask - метод, случайным образом возвращает координаты хода компьютера с помощью метода randint
-    """
-    def ask(self):
-        comp = Pointer (randint(0, 5), randint(0, 5))        # получаем координаты для хода компьютера
-        print(f"Ход компьютера: {comp.x + 1} {comp.y + 1}")  # печатаем координаты в консоль
-        return comp
-
-class User(Player):  # ход игрока
-    """
-класс User(Player) - класс хода игрока.
-    описывается следующим методом:
-    - ask - метод, запрашивает координаты точки из консоли
-    """
-    def ask(self):
-        while True:                                         # запрашиваем координаты точки из консоли
-            cords_point = input("Ваш ход: ").split()
-            if len(cords_point) != 2:
-                print(" Введите 2 координаты! ")
-                continue
-            x, y = cords_point
-            if not (x.isdigit()) or not (y.isdigit()):
-                print(" Введите числа! ")
-                continue
-            x, y = int(x), int(y)
-            return Pointer(x - 1, y - 1)
-
 class Game: # класс игра
     def try_board(self):                                  # добавление на доску кораблей
         lens = [3, 2, 2, 1, 1, 1, 1]                      # список длин корабликов
@@ -262,12 +233,12 @@ class Game: # класс игра
         return board
 
     def __init__(self, size=6):
-        self.size = size                                  # задание размера доски
-        pl = self.random_board()                          # доска игрока
-        co = self.random_board()                          # доска компьютера
-        co.hid = True                                     # отображение корабликов
-        self.ai = Comp(co, pl)                              # определение полей для компьютера
-        self.us = User(pl, co)                            # определение полей для пользователя
+        self.size = size                                  # задание размера поля
+        pl = self.random_board()                          # поле игрока
+        co = self.random_board()                          # поле компьютера
+        co.hid = True                                     # отображение корабли
+        self.comp = Comp(co, pl)                            # определяем поле для компьютера
+        self.user = User(pl, co)                            # определяем поле для пользователя
 
     def greet(self):                                      # приветствие
         print("-------------------")
@@ -277,34 +248,64 @@ class Game: # класс игра
         print(" x - номер строки  ")
         print(" y - номер столбца ")
 
-    def loop(self):
-        num = 0
-        while True:
-            print("-" * 20)
-            print(self.us.board.prinfield(self.ai.board))                          # вывод доски
-            print("-" * 20)
-            if num % 2 == 0:
+    def loop(self):                                            # метод основного цикла игры
+        num = 0                                                # задаем начальное значение счетчика ходов
+        while True:                                            # запускаем цикл
+            print("-" * 20)                                    # выводим разделитель
+            print(self.user.board.prinfield(self.comp.board))  # выводим поле игроков в консоль
+            print("-" * 20)                                    # выводим разделитель
+            if num % 2 == 0:                                   # определяем ход для игрока
                 print("Ходит пользователь!")
-                repeat = self.us.move()
-            else:
+                repeat = self.user.move()
+            else:                                              # иначе ход компьютера
                 print("Ходит компьютер!")
-                repeat = self.ai.move()
+                repeat = self.comp.move()
             if repeat:
                 num -= 1
-            if self.ai.board.count == 7:
+            if self.comp.board.count == 7:                     # условие победы для пользователя
                 print("-" * 20)
                 print("Пользователь выиграл!")
                 break
-            if self.us.board.count == 7:
+            if self.user.board.count == 7:                     # условие победы для компьютера
                 print("-" * 20)
                 print("Компьютер выиграл!")
                 break
             num += 1
 
-    def run(self):
-        self.greet()
-        self.loop()
+    def run(self):                                        # метод для запуска игры
+        self.greet()                                      # выводим заставку
+        self.loop()                                       # запускаем основной цикл игры
+
+class User(Player):  # ход игрока
+    """
+класс User(Player) - класс хода игрока.
+    описывается следующим методом:
+    - ask - метод, запрашивает координаты точки из консоли
+    """
+    def ask(self):
+        while True:                                         # запрашиваем координаты точки из консоли
+            cords_point = input("Ваш ход: ").split()
+            if len(cords_point) != 2:
+                print(" Введите 2 координаты! ")
+                continue
+            x, y = cords_point
+            if not (x.isdigit()) or not (y.isdigit()):      # проверяем, что с консоли вводили только цифры
+                print(" Введите числа! ")
+                continue
+            x, y = int(x), int(y)
+            return Pointer(x - 1, y - 1)
+
+class Comp(Player):
+    """
+класс Comp(Player) - класс хода комптютера.
+    описывается следующим методом:
+    - ask - метод, случайным образом возвращает координаты хода компьютера с помощью метода randint
+    """
+    def ask(self):
+        comp = Pointer (randint(0, 5), randint(0, 5))        # получаем координаты для хода компьютера
+        print(f"Ход компьютера: {comp.x + 1} {comp.y + 1}")  # печатаем координаты в консоль
+        return comp
 
 
-sea_battle = Game()
-sea_battle.run()
+sea_battle = Game()  # создаем экземпляр класса Game
+sea_battle.run()     # запускаем для него метод run
